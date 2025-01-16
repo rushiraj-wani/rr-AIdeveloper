@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { UserContext } from "../context/user.context";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "../config/axios";
 import {
@@ -14,6 +15,8 @@ const Project = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState([]);
   const [project, setProject] = useState(location.state.project);
+  const [message, setMessage] = useState("");
+  const { user } = useContext(UserContext);
 
   const [users, setUsers] = useState([]);
 
@@ -45,8 +48,24 @@ const Project = () => {
       });
   }
 
+  const send = () => {
+    console.log(user);
+
+    sendMessage("project-message", {
+      message,
+      sender: user._id,
+    });
+
+    setMessage("");
+  };
+
   useEffect(() => {
-    initializeSocket();
+    initializeSocket(project._id);
+
+    receiveMessage("project-message", (data) => {
+      console.log(data);
+    });
+
     axios
       .get(`/projects/get-project/${location.state.project._id}`)
       .then((res) => {
@@ -95,11 +114,13 @@ const Project = () => {
           </div>
           <div className="inputField w-full flex">
             <input
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
               className="p-2 px-4 border-none outline-none flex-grow"
               type="text"
               placeholder="Enter message"
             />
-            <button className="px-5 bg-slate-950 text-white">
+            <button onClick={send} className="px-5 bg-slate-950 text-white">
               <i className="ri-send-plane-fill"></i>
             </button>
           </div>
