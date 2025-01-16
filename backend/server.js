@@ -21,7 +21,6 @@ io.use(async (socket, next) => {
     const token =
       socket.handshake.auth?.token ||
       socket.handshake.headers.authorization?.split(" ")[1];
-
     const projectId = socket.handshake.query.projectId;
 
     if (!mongoose.Types.ObjectId.isValid(projectId)) {
@@ -59,12 +58,13 @@ io.on("connection", (socket) => {
     const message = data.message;
 
     const aiIsPresentInMessage = message.includes("@rr");
-
     socket.broadcast.to(socket.roomId).emit("project-message", data);
 
     if (aiIsPresentInMessage) {
       const prompt = message.replace("@rr", "");
+
       const result = await generateResult(prompt);
+
       io.to(socket.roomId).emit("project-message", {
         message: result,
         sender: {
@@ -72,13 +72,11 @@ io.on("connection", (socket) => {
           email: "AI",
         },
       });
+
       return;
     }
   });
 
-  socket.on("event", (data) => {
-    /* … */
-  });
   socket.on("disconnect", () => {
     console.log("user disconnected");
     socket.leave(socket.roomId);
